@@ -41,6 +41,11 @@ class ElvisAPI {
     private $csrfAuth;
 
     /**
+     * authToken
+     */
+    private $authToken;
+
+    /**
      * File path to store temporary current login session
      */
     private $tmpFile;
@@ -264,6 +269,35 @@ class ElvisAPI {
         } else {
             return false;
         }
+    }
+
+    /**
+     * apilogin Function to log in to Elvis.
+     * @example <code>
+     * if ($elvis->apilogin()) {
+     *     //log in is success
+     * }
+     * </code>
+     * @return boolean true = successfully logged in, false = failed to log in
+     */
+    public function apilogin() {
+        $loginURL = $this->url . 'services/apilogin';
+        $data = array(
+            'username' => $this->username,
+            'password' => $this->password
+        );
+        $server_output = $this->fetch($loginURL, $data);
+
+        if (
+            (isset($server_output['loginSuccess'])) && 
+            ($server_output['loginSuccess'] == 1) && 
+            (isset($server_output['authToken'])) && 
+            (!empty($server_output['authToken']))
+        ) {
+            $this->authToken = $server_output['authToken'];
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -538,6 +572,14 @@ class ElvisAPI {
         $url = $this->url . 'services/search?q=id:' . $id . '&authcred=' . base64_encode($this->user . ':' . $this->pass);
         $data = file_get_contents($url);
         return json_decode($data, true);
+    }
+
+    /**
+     * Return the authToken set from apilogin
+     * @return string Elvis AuthToken
+     */
+    public function getAuthToken() {
+        return $this->authToken;
     }
 
     /**
